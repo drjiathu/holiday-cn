@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r dev-requirements.txt
+      - name: Setup git user
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@users.noreply.github.com"
+      - name: Test
+        run: coverage run -m pytest
+      - name: Lint
+        run: make lint
+      - name: Update(master)
+        if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: coverage run -a ./update.py --release
+      - name: Update
+        if: ${{ !(github.ref == 'refs/heads/master' && github.event_name != 'pull_request') }}
+        run: coverage run -a ./update.py
+      # FIXME
+      #- name: Report coverage
+      #  env:
+      #    CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
+      #  run: |
+      #    coverage xml && coverage report
+      #    if [[ -n "$CC_TEST_REPORTER_ID" ]]; then\
+      #     curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter &&\
+      #      chmod +x ./cc-test-reporter &&\
+      #      ./cc-test-reporter after-build ;\
+      #    fi
