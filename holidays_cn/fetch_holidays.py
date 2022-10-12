@@ -212,8 +212,7 @@ class DescriptionParser:
         """Generator for description parsing result."""
         del self.date_history[:]
         for i in re.split('[，。；]', self.description):
-            for j in SentenceParser(self, i).parse():
-                yield j
+            yield from SentenceParser(self, i).parse()
 
         if not self.date_history:
             raise NotImplementedError(self.description)
@@ -281,8 +280,7 @@ class SentenceParser:
             Iterator[dict]: Days without name field.
         """
         for method in self.parsing_methods:
-            for i in method(self):
-                yield i
+            yield from method(self)
 
     def _extract_dates_1(self, value: str) -> Iterator[date]:
         match = re.findall(r"(?:(\d+)年)?(?:(\d+)月)?(\d+)日", value)
@@ -388,8 +386,7 @@ def parse_paper(year: int, url: str) -> Iterator[dict]:
         for i in DescriptionParser(description, year).parse()
     )
     try:
-        for i in ret:
-            yield i
+        yield from ret
     except NotImplementedError as ex:
         raise RuntimeError("Can not parse paper", url) from ex
 
@@ -399,7 +396,7 @@ def fetch_holidays(year: int):
     papers = get_paper_urls(year)
 
     days = {k["date"]: k for k in
-            (j for i in papers for j in parse_paper(year, i))}
+            (rule for url in papers for rule in parse_paper(year, url))}
 
     return {
         "year": year,
