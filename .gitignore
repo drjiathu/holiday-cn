@@ -20,6 +20,7 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -38,6 +39,7 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.nox/
 .coverage
 .coverage.*
 .cache
@@ -46,6 +48,8 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+/tests/result.md
+/reports/
 
 # Translations
 *.mo
@@ -71,6 +75,17 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+test.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Pycharm
+.idea/
+
+# vscode
+.vscode/
 
 # pyenv
 .python-version
@@ -102,6 +117,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+.dmypy.json
+dmypy.json
 
-# editor
-.vscode
+# Pyre type checker
+.pyre/
+
+# data
+data/*
+!data/.gitkeep
