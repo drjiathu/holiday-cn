@@ -1,199 +1,174 @@
 {
     "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
-    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2021.json",
-    "year": 2021,
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2025.json",
+    "year": 2025,
     "papers": [
-        "http://www.gov.cn/zhengce/zhengceku/2020-11/25/content_5564127.htm"
+        "https://www.gov.cn/zhengce/zhengceku/202411/content_6986383.htm"
     ],
     "days": [
         {
             "name": "元旦",
-            "date": "2021-01-01",
-            "isOffDay": true
-        },
-        {
-            "name": "元旦",
-            "date": "2021-01-02",
-            "isOffDay": true
-        },
-        {
-            "name": "元旦",
-            "date": "2021-01-03",
+            "date": "2025-01-01",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-07",
+            "date": "2025-01-26",
             "isOffDay": false
         },
         {
             "name": "春节",
-            "date": "2021-02-11",
+            "date": "2025-01-28",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-12",
+            "date": "2025-01-29",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-13",
+            "date": "2025-01-30",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-14",
+            "date": "2025-01-31",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-15",
+            "date": "2025-02-01",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-16",
+            "date": "2025-02-02",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-17",
+            "date": "2025-02-03",
             "isOffDay": true
         },
         {
             "name": "春节",
-            "date": "2021-02-20",
+            "date": "2025-02-04",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2025-02-08",
             "isOffDay": false
         },
         {
             "name": "清明节",
-            "date": "2021-04-03",
+            "date": "2025-04-04",
             "isOffDay": true
         },
         {
             "name": "清明节",
-            "date": "2021-04-04",
+            "date": "2025-04-05",
             "isOffDay": true
         },
         {
             "name": "清明节",
-            "date": "2021-04-05",
+            "date": "2025-04-06",
             "isOffDay": true
         },
         {
             "name": "劳动节",
-            "date": "2021-04-25",
+            "date": "2025-04-27",
             "isOffDay": false
         },
         {
             "name": "劳动节",
-            "date": "2021-05-01",
+            "date": "2025-05-01",
             "isOffDay": true
         },
         {
             "name": "劳动节",
-            "date": "2021-05-02",
+            "date": "2025-05-02",
             "isOffDay": true
         },
         {
             "name": "劳动节",
-            "date": "2021-05-03",
+            "date": "2025-05-03",
             "isOffDay": true
         },
         {
             "name": "劳动节",
-            "date": "2021-05-04",
+            "date": "2025-05-04",
             "isOffDay": true
         },
         {
             "name": "劳动节",
-            "date": "2021-05-05",
-            "isOffDay": true
-        },
-        {
-            "name": "劳动节",
-            "date": "2021-05-08",
-            "isOffDay": false
-        },
-        {
-            "name": "端午节",
-            "date": "2021-06-12",
+            "date": "2025-05-05",
             "isOffDay": true
         },
         {
             "name": "端午节",
-            "date": "2021-06-13",
+            "date": "2025-05-31",
             "isOffDay": true
         },
         {
             "name": "端午节",
-            "date": "2021-06-14",
+            "date": "2025-06-01",
             "isOffDay": true
         },
         {
-            "name": "中秋节",
-            "date": "2021-09-18",
+            "name": "端午节",
+            "date": "2025-06-02",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2025-09-28",
             "isOffDay": false
         },
         {
-            "name": "中秋节",
-            "date": "2021-09-19",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-01",
             "isOffDay": true
         },
         {
-            "name": "中秋节",
-            "date": "2021-09-20",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-02",
             "isOffDay": true
         },
         {
-            "name": "中秋节",
-            "date": "2021-09-21",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-03",
             "isOffDay": true
         },
         {
-            "name": "国庆节",
-            "date": "2021-09-26",
-            "isOffDay": false
-        },
-        {
-            "name": "国庆节",
-            "date": "2021-10-01",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-04",
             "isOffDay": true
         },
         {
-            "name": "国庆节",
-            "date": "2021-10-02",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-05",
             "isOffDay": true
         },
         {
-            "name": "国庆节",
-            "date": "2021-10-03",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-06",
             "isOffDay": true
         },
         {
-            "name": "国庆节",
-            "date": "2021-10-04",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-07",
             "isOffDay": true
         },
         {
-            "name": "国庆节",
-            "date": "2021-10-05",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-08",
             "isOffDay": true
         },
         {
-            "name": "国庆节",
-            "date": "2021-10-06",
-            "isOffDay": true
-        },
-        {
-            "name": "国庆节",
-            "date": "2021-10-07",
-            "isOffDay": true
-        },
-        {
-            "name": "国庆节",
-            "date": "2021-10-09",
+            "name": "国庆节、中秋节",
+            "date": "2025-10-11",
             "isOffDay": false
         }
     ]
