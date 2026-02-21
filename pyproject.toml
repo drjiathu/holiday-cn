@@ -26,9 +26,23 @@ pytest = "^8.0.0"
 coverage = "^7.0.0"
 flake8 = "^7.0.0"
 httpx = "^0.28.0"
+black = "^26.1.0"
 
 [tool.poetry.scripts]
 holiday-cn = "holiday_cn.entry:cli"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.venv
+    | build
+    | dist
+)/
+'''
 
 [build-system]
 requires = ["poetry-core"]

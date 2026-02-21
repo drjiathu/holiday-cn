@@ -46,6 +46,7 @@ app.add_middleware(
 
 class DayInfo(BaseModel):
     """单日信息"""
+
     date: str
     name: str
     isOffDay: bool
@@ -53,6 +54,7 @@ class DayInfo(BaseModel):
 
 class HolidayResponse(BaseModel):
     """节假日查询响应"""
+
     date: str
     isHoliday: bool
     isOffDay: bool | None = None
@@ -61,6 +63,7 @@ class HolidayResponse(BaseModel):
 
 class YearData(BaseModel):
     """年度数据"""
+
     year: int
     papers: list[str]
     days: list[DayInfo]
@@ -195,4 +198,5 @@ def query_range(
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
