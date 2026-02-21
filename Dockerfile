@@ -47,10 +47,10 @@ ENV PATH="/app/.venv/bin:$PATH"
 # RUN poetry install --no-root --only-main
 
 # 声明运行时需要暴露的端口
-EXPOSE 5000
+EXPOSE 8000
 
-# 定义环境变量
-# ENV NAME World
+# 运行模式: api (默认) 或 update
+ENV MODE=api
 
-# 运行应用程序
-# CMD ["python", "holiday_cn/update.py"]
+# 启动脚本
+CMD ["sh", "-c", "if [ \"$MODE\" = 'update' ]; then python -m holiday_cn.entry $UPDATE_ARGS; else uvicorn holiday_cn.api:app --host 0.0.0.0 --port 8000; fi"]

@@ -123,6 +123,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# data
-data/*
-!data/.gitkeep
+# data - 保留 JSON 和 ICS 数据文件
+!data/
+!data/*.json
+!data/*.ics

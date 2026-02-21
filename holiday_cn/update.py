@@ -13,7 +13,7 @@ from tempfile import mkstemp
 from typing import Iterator
 from zipfile import ZipFile
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .fetch import CustomJSONEncoder, fetch_holidays
 from .generate_ics import generate_ics

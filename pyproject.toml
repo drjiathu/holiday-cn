@@ -18,11 +18,14 @@ beautifulsoup4 = "^4.12.3"
 requests = "^2.32.3"
 icalendar = "^5.0.13"
 tqdm = "^4.66.4"
+fastapi = "^0.115.0"
+uvicorn = "^0.34.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 coverage = "^7.0.0"
 flake8 = "^7.0.0"
+httpx = "^0.28.0"
 
 [tool.poetry.scripts]
 holiday-cn = "holiday_cn.entry:cli"
