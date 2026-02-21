@@ -41,19 +41,17 @@ def update_data(year: int) -> Iterator[Path]:
 
     with open(json_filename, "w", encoding="utf-8", newline="\n") as f:
         json.dump(
-            dict(
-                (
-                    (
-                        "$schema",
-                        "https://raw.githubusercontent.com/drjiathu/holiday-cn/master/schema.json",
-                    ),
-                    (
-                        "$id",
-                        f"https://raw.githubusercontent.com/drjiathu/holiday-cn/master/data/{year}.json",
-                    ),
-                    *data.items(),
-                )
-            ),
+            {
+                "$schema": (
+                    "https://raw.githubusercontent.com"
+                    "/drjiathu/holiday-cn/master/schema.json"
+                ),
+                "$id": (
+                    "https://raw.githubusercontent.com"
+                    f"/drjiathu/holiday-cn/master/data/{year}.json"
+                ),
+                **data,
+            },
             f,
             indent=4,
             ensure_ascii=False,
