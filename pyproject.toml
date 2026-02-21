@@ -17,7 +17,6 @@ click = "^8.1.7"
 beautifulsoup4 = "^4.12.3"
 requests = "^2.32.3"
 icalendar = "^5.0.13"
-pymongo = "^4.8.0"
 tqdm = "^4.66.4"
 
 [tool.poetry.group.dev.dependencies]

@@ -10,12 +10,9 @@ from pathlib import Path
 import re
 import subprocess
 from tempfile import mkstemp
-from threading import Thread
 from typing import Iterator
 from zipfile import ZipFile
 
-from pymongo import MongoClient, UpdateOne
-from pymongo.errors import ConnectionFailure
 from tqdm import tqdm
 
 from .fetch import CustomJSONEncoder, fetch_holidays
@@ -36,126 +33,32 @@ class ChinaTimezone(tzinfo):
         return timedelta()
 
 
-class MongoDBConnection:
-    def __init__(
-        self,
-        host="localhost",
-        port: int = 27017,
-        database: str | None = None,
-        username=None,
-        password=None,
-        auth_source="admin",
-    ):
-        self.host = host
-        self.port = port
-        self.username = username
-        self.password = password
-        self.database = database
-        self.auth_source = auth_source
-        self.client = None
-
-    def __enter__(self):
-        try:
-            self.client = MongoClient(
-                self.host,
-                self.port,
-                username=self.username,
-                password=self.password,
-                authSource=self.auth_source,
-            )
-            if self.database:
-                self.db = self.client[self.database]
-            return self
-        except ConnectionFailure as e:
-            print(f"Connection error: {str(e)}")
-            raise
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.client:
-            self.client.close()
-
-    def upsert_one(self, collection, record):
-        col = self.db[collection]
-        unique_names = []
-        for k, v in col.index_information().items():
-            if k != "_id_" and v["unique"]:
-                unique_names += [c[0] for c in v["key"]]
-        col.update_one(
-            {n: record[n] for n in unique_names}, {"$set": record}, upsert=True
-        )
-
-    def upsert_many(self, collection, records):
-        col = self.db[collection]
-        unique_names = []
-        for k, v in col.index_information().items():
-            if k != "_id_" and v["unique"]:
-                unique_names += [c[0] for c in v["key"]]
-        operations = [
-            UpdateOne({n: r[n] for n in unique_names}, {"$set": r}, upsert=True)
-            for r in records
-        ]
-        col.bulk_write(operations)
-
-
 def update_data(year: int) -> Iterator[Path]:
     """Update and store data for a year."""
     json_filename = dataspace_path(f"{year}.json")
     ics_filename = dataspace_path(f"{year}.ics")
     data = fetch_holidays(year)
 
-    def _dump_json():
-        with open(json_filename, "w", encoding="utf-8", newline="\n") as f:
-            json.dump(
-                dict(
+    with open(json_filename, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(
+            dict(
+                (
                     (
-                        (
-                            "$schema",
-                            "https://raw.githubusercontent.com/drjiathu/holiday-cn/master/schema.json",
-                        ),
-                        (
-                            "$id",
-                            f"https://raw.githubusercontent.com/drjiathu/holiday-cn/master/data/{year}.json",
-                        ),
-                        *data.items(),
-                    )
-                ),
-                f,
-                indent=4,
-                ensure_ascii=False,
-                cls=CustomJSONEncoder,
-            )
-
-    def _dump_mongo():
-        if data is None:
-            return
-        papers = data["papers"]
-        records: list[dict] = []
-        for d in data["days"]:
-            d["papers"] = papers
-            d["date"] = d["date"].isoformat()
-            records.append(d)
-        with MongoDBConnection(
-            host="192.168.106.21",
-            database="others",
-            username="prod",
-            password="prod@Yuanhui",
-            auth_source="others",
-        ) as conn:
-            if isinstance(records, dict):
-                conn.upsert_one("holiday_cn", records)
-            else:
-                conn.upsert_many("holiday_cn", records)
-
-    t1 = Thread(target=_dump_json)
-    t2 = Thread(target=_dump_mongo)
-
-    t1.start()
-    t2.start()
-
-    t1.join()
-    t2.join()
-    # _dump_json()
-    # _dump_mongo()
+                        "$schema",
+                        "https://raw.githubusercontent.com/drjiathu/holiday-cn/master/schema.json",
+                    ),
+                    (
+                        "$id",
+                        f"https://raw.githubusercontent.com/drjiathu/holiday-cn/master/data/{year}.json",
+                    ),
+                    *data.items(),
+                )
+            ),
+            f,
+            indent=4,
+            ensure_ascii=False,
+            cls=CustomJSONEncoder,
+        )
 
     yield json_filename
     generate_ics(data["days"], ics_filename)
@@ -190,7 +93,7 @@ def pack_data(file):
 def github_push(*filenames, is_release=False):
     subprocess.run(["git", "add", *filenames], check=True)
     diff = subprocess.run(
-        ["git", "diff", "--stat", "--cached", "*.json", "*.ics"],
+        ["git", "diff", "--stat", "--cached", "data/*.json", "data/*.ics"],
         check=True,
         stdout=subprocess.PIPE,
         encoding="utf-8",
