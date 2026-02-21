@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国法定节假日查询</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        input[type="date"], input[type="number"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        .result.holiday {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+        .result.workday {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        .result.normal {
+            background: #f5f5f5;
+            border-left: 4px solid #9e9e9e;
+        }
+        .result .date {
+            font-size: 14px;
+            color: #666;
+        }
+        .result .name {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        .result .status {
+            font-size: 14px;
+        }
+        .holiday-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .holiday-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .holiday-item:last-child {
+            border-bottom: none;
+        }
+        .holiday-item .name {
+            font-weight: 500;
+        }
+        .holiday-item .date {
+            color: #666;
+            font-size: 14px;
+        }
+        .tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .tag.off {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .tag.work {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .footer a {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>中国法定节假日查询</h1>
+
+        <!-- 查询特定日期 -->
+        <div class="card">
+            <h2>查询日期</h2>
+            <div class="input-group">
+                <input type="date" id="queryDate" value="">
+                <button onclick="queryDate()">查询</button>
+            </div>
+            <div id="dateResult"></div>
+        </div>
+
+        <!-- 查询年度节假日 -->
+        <div class="card">
+            <h2>年度节假日</h2>
+            <div class="input-group">
+                <input type="number" id="queryYear" placeholder="输入年份" min="2007" max="2030">
+                <button onclick="queryYear()">查询</button>
+            </div>
+            <div id="yearResult" class="holiday-list"></div>
+        </div>
+
+        <!-- 下一个假日 -->
+        <div class="card">
+            <h2>下一个假日</h2>
+            <button onclick="queryNextHoliday()" style="width: 100%;">查询下一个假日</button>
+            <div id="nextHolidayResult"></div>
+        </div>
+
+        <div class="footer">
+            数据来源: <a href="https://github.com/drjiathu/holiday-cn" target="_blank">holiday-cn</a>
+            <br>
+            通过 jsDelivr CDN 加速
+        </div>
+    </div>
+
+    <script>
+        // 使用 @latest 自动指向最新 release
+        const CDN_BASE_URL = 'https://cdn.jsdelivr.net/gh/drjiathu/holiday-cn@latest/data';
+        const cache = new Map();
+
+        // 设置默认日期为今天
+        document.getElementById('queryDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('queryYear').value = new Date().getFullYear();
+
+        async function getHolidays(year) {
+            if (cache.has(year)) {
+                return cache.get(year);
+            }
+            const response = await fetch(`${CDN_BASE_URL}/${year}.json`);
+            if (!response.ok) {
+                throw new Error(`未找到 ${year} 年的数据`);
+            }
+            const data = await response.json();
+            cache.set(year, data);
+            return data;
+        }
+
+        async function queryDate() {
+            const dateInput = document.getElementById('queryDate').value;
+            const resultDiv = document.getElementById('dateResult');
+
+            if (!dateInput) {
+                resultDiv.innerHTML = '<div class="result normal">请选择日期</div>';
+                return;
+            }
+
+            try {
+                const year = parseInt(dateInput.slice(0, 4));
+                const data = await getHolidays(year);
+                const day = data.days.find(d => d.date === dateInput);
+
+                if (day) {
+                    const isOff = day.isOffDay;
+                    resultDiv.innerHTML = `
+                        <div class="result ${isOff ? 'holiday' : 'workday'}">
+                            <div class="date">${dateInput}</div>
+                            <div class="name">${day.name}</div>
+                            <div class="status">${isOff ? '🎉 放假休息' : '💼 调休上班'}</div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result normal">
+                            <div class="date">${dateInput}</div>
+                            <div class="name">普通日</div>
+                            <div class="status">非法定节假日</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result normal">查询失败: ${error.message}</div>`;
+            }
+        }
+
+        async function queryYear() {
+            const year = document.getElementById('queryYear').value;
+            const resultDiv = document.getElementById('yearResult');
+
+            if (!year) {
+                resultDiv.innerHTML = '<div class="result normal">请输入年份</div>';
+                return;
+            }
+
+            try {
+                const data = await getHolidays(parseInt(year));
+                const html = data.days.map(day => `
+                    <div class="holiday-item">
+                        <div>
+                            <div class="name">${day.name}</div>
+                            <div class="date">${day.date}</div>
+                        </div>
+                        <span class="tag ${day.isOffDay ? 'off' : 'work'}">
+                            ${day.isOffDay ? '休息' : '上班'}
+                        </span>
+                    </div>
+                `).join('');
+
+                resultDiv.innerHTML = html || '<div class="result normal">该年份暂无数据</div>';
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result normal">查询失败: ${error.message}</div>`;
+            }
+        }
+
+        async function queryNextHoliday() {
+            const resultDiv = document.getElementById('nextHolidayResult');
+            const today = new Date();
+
+            try {
+                for (const year of [today.getFullYear(), today.getFullYear() + 1]) {
+                    const data = await getHolidays(year);
+                    for (const day of data.days) {
+                        const dayDate = new Date(day.date);
+                        if (dayDate > today && day.isOffDay) {
+                            const daysUntil = Math.ceil((dayDate - today) / (1000 * 60 * 60 * 24));
+                            resultDiv.innerHTML = `
+                                <div class="result holiday">
+                                    <div class="date">${day.date}</div>
+                                    <div class="name">${day.name}</div>
+                                    <div class="status">🎉 还有 ${daysUntil} 天</div>
+                                </div>
+                            `;
+                            return;
+                        }
+                    }
+                }
+                resultDiv.innerHTML = '<div class="result normal">未找到下一个假日</div>';
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result normal">查询失败: ${error.message}</div>`;
+            }
+        }
+
+        // 页面加载时自动查询今天
+        queryDate();
+    </script>
+</body>
+</html>
