@@ -44,6 +44,9 @@ exclude = '''
 )/
 '''
 
+[tool.coverage.run]
+omit = ["*/site-packages/*", "*/tests/*"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

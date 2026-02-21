@@ -1,31 +1,11 @@
-version: "3.8"
-
 services:
-  # API 查询服务 - 常驻运行
-  api:
+  holiday-cn:
     build: .
-    container_name: holiday-cn-api
-    environment:
-      - MODE=api
+    container_name: holiday-cn
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data:ro  # 只读挂载数据目录
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # 数据更新服务 - 定时运行
-  update:
-    build: .
-    container_name: holiday-cn-update
+      - ./data:/app/data
     environment:
-      - MODE=update
-      - UPDATE_ARGS=--all  # 首次运行获取所有数据，之后可改为空
-    volumes:
-      - ./data:/app/data  # 读写挂载数据目录
-    profiles:
-      - update  # 手动触发，不随 docker-compose up 启动
+      - CRON_SCHEDULE=0 12 * * *  # 定时更新时间，默认每天中午 12 点
+    restart: unless-stopped

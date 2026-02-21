@@ -1,56 +1,46 @@
-# 第一阶段：构建环境
-# 使用官方Python 3.11运行时作为父镜像
-FROM python:3.11-slim AS build
+# 使用官方 Python 3.11 运行时作为基础镜像
+FROM python:3.11-slim
 
-# 确保Python输出是UTF-8
+# 确保 Python 输出是 UTF-8
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=UTF-8
 
+# 安装系统依赖
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends cron curl && \
+    rm -rf /var/lib/apt/lists/*
+
 # 设置工作目录
 WORKDIR /app
 
-# 复制 pyproject.toml 和 poetry.lock
+# 复制依赖文件
 COPY pyproject.toml poetry.lock ./
 
-# 安装poetry。你可以通过其他方式预先安装poetry，比如在Dockerfile中使用RUN pip install poetry
-RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple poetry
-
-# 使用poetry安装依赖到虚拟环境
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-ansi
+# 安装 Poetry 并安装依赖
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-root --only main --no-ansi
 
 # 复制项目文件
-COPY . .
+COPY holiday_cn ./holiday_cn
 
-# 如果有需要，可以在这里运行测试或其他构建脚本
-# RUN pytest
+# 复制启动脚本
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 第二阶段：生产环境
-FROM python:3.11-slim AS production
+# 创建数据目录
+RUN mkdir -p /app/data
 
-# 确保Python输出是UTF-8
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONIOENCODING=UTF-8
+# 环境变量：cron 表达式（默认每天中午 12 点）
+ENV CRON_SCHEDULE="0 12 * * *"
 
-# 设置工作目录
-WORKDIR /app
-
-# 从构建阶段复制已安装的依赖和项目文件
-COPY --from=build /app /app
-
-# 由于Poetry会将依赖安装在虚拟环境中，我们可以通过以下方式激活虚拟环境
-ENV PATH="/app/.venv/bin:$PATH"
-
-# 可选：如果只需要运行时依赖，可以删除安装在虚拟环境中的开发依赖
-# RUN poetry install --no-root --only-main
-
-# 声明运行时需要暴露的端口
+# 暴露端口
 EXPOSE 8000
 
-# 运行模式: api (默认) 或 update
-ENV MODE=api
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
 
-# 启动脚本
-CMD ["sh", "-c", "if [ \"$MODE\" = 'update' ]; then python -m holiday_cn.entry $UPDATE_ARGS; else uvicorn holiday_cn.api:app --host 0.0.0.0 --port 8000; fi"]
+# 启动入口
+ENTRYPOINT ["docker-entrypoint.sh"]
