@@ -124,8 +124,10 @@ def query_date(query_date: str):
     """
     try:
         d = date.fromisoformat(query_date)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="日期格式错误，应为 YYYY-MM-DD")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail="日期格式错误，应为 YYYY-MM-DD"
+        ) from exc
 
     day_info = find_day(d.year, d.month, d.day)
 
@@ -177,8 +179,10 @@ def query_range(
     try:
         start_date = date.fromisoformat(start)
         end_date = date.fromisoformat(end)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="日期格式错误，应为 YYYY-MM-DD")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail="日期格式错误，应为 YYYY-MM-DD"
+        ) from exc
 
     if start_date > end_date:
         raise HTTPException(status_code=400, detail="开始日期不能晚于结束日期")
