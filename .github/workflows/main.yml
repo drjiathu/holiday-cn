@@ -26,6 +26,8 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
       - name: Test
         run: poetry run coverage run -m pytest
+      - name: Format Check
+        run: poetry run black --check holiday_cn tests
       - name: Lint
         run: poetry run flake8 holiday_cn tests
       - name: Update (main)
