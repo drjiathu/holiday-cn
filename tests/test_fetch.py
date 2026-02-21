@@ -1,18 +1,17 @@
-"""Test module `fetch_holidays`.  """
+"""Test module of `fetch_holidays`."""
 
 import json
 
 import pytest
 
-from fetch import (
-    CustomJSONEncoder,
-    DescriptionParser,
+from holiday_cn.fetch import (
     get_paper,
     get_paper_urls,
     get_rules,
+    CustomJSONEncoder,
+    DescriptionParser,
 )
-
-from filetools import workspace_path
+from holiday_cn.filetools import workspace_path
 
 
 def test_get_paper_urls():
@@ -68,7 +67,7 @@ def _normalize(iterable):
 
 def _description_parsing_cases():
     with open(
-        workspace_path("scripts", "description_parsing_cases.json"),
+        workspace_path("tests", "description_parsing_cases.json"),
         "r",
         encoding="utf-8",
     ) as f:

@@ -1,6 +1,8 @@
-import datetime
-from typing import Any, Iterator, Sequence, Text, Tuple
-from icalendar import Event, Calendar, Timezone, TimezoneStandard
+from datetime import datetime, date, timedelta
+from pathlib import Path
+from typing import Iterator, Sequence
+
+from icalendar import Timezone, TimezoneStandard, Event, Calendar
 
 
 def _create_timezone():
@@ -8,42 +10,38 @@ def _create_timezone():
     tz.add("TZID", "Asia/Shanghai")
 
     tz_standard = TimezoneStandard()
-    tz_standard.add("DTSTART", datetime.datetime(1970, 1, 1))
-    tz_standard.add("TZOFFSETFROM", datetime.timedelta(hours=8))
-    tz_standard.add("TZOFFSETTO", datetime.timedelta(hours=8))
+    tz_standard.add("DTSTART", datetime(1970, 1, 1))
+    tz_standard.add("TZOFFSETFROM", timedelta(hours=8))
+    tz_standard.add("TZOFFSETTO", timedelta(hours=8))
 
     tz.add_component(tz_standard)
     return tz
 
 
-def _create_event(event_name, start, end):
-    # 创建事件/日程
+def _create_event(event_name: str, start, end):
+    # Create event/schedule
     event = Event()
     event.add("SUMMARY", event_name)
-
     event.add("DTSTART", start)
     event.add("DTEND", end)
-    # 创建时间
     event.add("DTSTAMP", start)
-
-    # UID保证唯一
-    event["UID"] = f"{start}/{end}/NateScarlet/holiday-cn"
+    # Keep the uniqueness of UID
+    event["UID"] = f"{start}/{end}/holiday-cn"
 
     return event
 
 
-def _cast_date(v: Any) -> datetime.date:
-    if isinstance(v, datetime.date):
+def _cast_date(v) -> date:
+    if isinstance(v, date):
         return v
     if isinstance(v, str):
-        return datetime.date.fromisoformat(v)
-    raise NotImplementedError("can not convert to date: %s" % v)
+        return date.fromisoformat(v)
+    raise NotImplementedError(f"cannot convert to date: {v}")
 
 
-def _iter_date_ranges(days: Sequence[dict]) -> Iterator[Tuple[dict, dict]]:
+def _iter_date_ranges(days: Sequence[dict]) -> Iterator[tuple[dict, dict]]:
     if len(days) == 0:
         return
-
     if len(days) == 1:
         yield days[0], days[0]
         return
@@ -60,7 +58,7 @@ def _iter_date_ranges(days: Sequence[dict]) -> Iterator[Tuple[dict, dict]]:
     yield fr, to
 
 
-def generate_ics(days: Sequence[dict], filename: Text) -> None:
+def generate_ics(days: Sequence[dict], filename: Path | str) -> None:
     """Generate ics from days."""
     cal = Calendar()
     cal.add("X-WR-CALNAME", "中国法定节假日")
@@ -75,7 +73,7 @@ def generate_ics(days: Sequence[dict], filename: Text) -> None:
 
     for fr, to in _iter_date_ranges(days):
         start = _cast_date(fr["date"])
-        end = _cast_date(to["date"]) + datetime.timedelta(days=1)
+        end = _cast_date(to["date"]) + timedelta(days=1)
 
         name = fr["name"] + "假期"
         if not fr["isOffDay"]:

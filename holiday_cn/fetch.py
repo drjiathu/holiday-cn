@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
-"""Fetch holidays from gov.cn  """
+# -*- coding: UTF-8 -*-
+
+"""Fetch holidays from gov.cn"""
 
 import argparse
-import json
-import re
 from datetime import date, timedelta
 from itertools import chain
-from typing import Iterator, List, Optional, Tuple
+import json
+import re
+from typing import Iterable, Iterator
 
 import bs4
 import requests
 
+ANTI_FASCISM_70_ANNIVERSARY = "抗日战争暨世界反法西斯战争胜利70周年纪念日"
+
+# SEARCH_URL = "http://sousuo.gov.cn/s.htm"
 PAPER_EXCLUDE = [
     "http://www.gov.cn/zhengce/zhengceku/2014-09/29/content_9102.htm",
     "http://www.gov.cn/zhengce/zhengceku/2015-02/09/content_9466.htm",
@@ -22,22 +27,22 @@ PAPER_INCLUDE = {
 PRE_PARSED_PAPERS = {
     "http://www.gov.cn/zhengce/zhengceku/2015-05/13/content_9742.htm": [
         {
-            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "name": ANTI_FASCISM_70_ANNIVERSARY,
             "date": date(2015, 9, 3),
             "isOffDay": True,
         },
         {
-            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "name": ANTI_FASCISM_70_ANNIVERSARY,
             "date": date(2015, 9, 4),
             "isOffDay": True,
         },
         {
-            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "name": ANTI_FASCISM_70_ANNIVERSARY,
             "date": date(2015, 9, 5),
             "isOffDay": True,
         },
         {
-            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "name": ANTI_FASCISM_70_ANNIVERSARY,
             "date": date(2015, 9, 6),
             "isOffDay": False,
         },
@@ -71,8 +76,7 @@ def _raise_for_status_200(resp: requests.Response):
     resp.raise_for_status()
     if resp.status_code != 200:
         raise requests.HTTPError(
-            "request failed: %d: %s" % (resp.status_code, resp.request.url),
-            response=resp,
+            f"request failed: {resp.status_code}: {resp.request.url}", response=resp
         )
 
 
@@ -81,12 +85,12 @@ def _get_paper_urls(year: int) -> Iterator[str]:
     page_index = 0
     while has_next_page:
         resp = requests.get(
-            "https://sousuo.www.gov.cn/search-gov/data",
+            url="https://sousuo.www.gov.cn/search-gov/data",
             params={
                 "t": "zhengcelibrary_gw",
                 "p": page_index,
                 "n": 5,
-                "q": "假期 %d" % (year,),
+                "q": f"假期 {year}",
                 "pcodeJiguan": "国办发明电",
                 "puborg": "国务院办公厅",
                 "filetype": "通知",
@@ -96,13 +100,9 @@ def _get_paper_urls(year: int) -> Iterator[str]:
         _raise_for_status_200(resp)
         data = resp.json()
         if data["code"] == 1001:
-            # no match
+            # No Match
             return
-        assert data["code"] == 200, "%s: %s: %s" % (
-            resp.url,
-            data["code"],
-            data["msg"],
-        )
+        assert data["code"] == 200, "%s: %s: %s" % (resp.url, data["code"], data["msg"])
         for i in data["searchVO"]["listVO"]:
             if str(year) in i["title"]:
                 yield i["url"]
@@ -110,26 +110,26 @@ def _get_paper_urls(year: int) -> Iterator[str]:
         has_next_page = page_index < data["searchVO"]["totalpage"]
 
 
-def get_paper_urls(year: int) -> List[str]:
-    """Find year related paper urls.
+def get_paper_urls(year: int) -> list[str]:
+    """Finds year related paper urls.
 
     Args:
-        year (int): eg. 2018
+        year: int, year to search for, eg., 2018.
 
     Returns:
-        List[str]: Urls， sort by publish time.
+        list[str], urls, sort by publish time.
     """
-
     ret = [i for i in _get_paper_urls(year) if i not in PAPER_EXCLUDE]
     ret += PAPER_INCLUDE.get(year, [])
     ret.sort()
     if not ret and date.today().year >= year:
-        raise RuntimeError("could not found papers for %d" % (year,))
+        raise RuntimeError(f"could not found papers for {year}")
+
     return ret
 
 
 def get_paper(url: str) -> str:
-    """Extract paper text from url.
+    """Extract paper text from url
 
     Args:
         url (str): Paper url.
@@ -137,11 +137,15 @@ def get_paper(url: str) -> str:
     Returns:
         str: Extracted paper text.
     """
+    # assert re.match(
+    #     r"http://www.gov.cn/zhengce/zhengceku/\d{4}-\d{2}/\d{2}/content_\d+.htm",
+    #     url,
+    # ), "Site changed, need verification."
 
-    response = requests.get(url)
-    _raise_for_status_200(response)
-    response.encoding = "utf-8"
-    soup = bs4.BeautifulSoup(response.text, features="html.parser")
+    resp = requests.get(url)
+    _raise_for_status_200(resp)
+    resp.encoding = "utf-8"
+    soup = bs4.BeautifulSoup(resp.text, features="html.parser")
     container = soup.find(id="UCAP-CONTENT")
     assert isinstance(
         container, bs4.Tag
@@ -151,23 +155,24 @@ def get_paper(url: str) -> str:
     ).find_all("p")
     ret = "\n".join((i.get_text().strip() for i in p))
     assert ret, f"can not get paper content from url: {url}"
+
     return ret
 
 
-def get_rules(paper: str) -> Iterator[Tuple[str, str]]:
+def get_rules(paper: str) -> Iterator[tuple[str, str]]:
     """Extract rules from paper.
 
     Args:
-        paper (str): Paper text
+        paper (str): Paper text.
+
+    Returns:
+        Iterator [tuple[str, str]]: (name, description)
 
     Raises:
         NotImplementedError: When find no rules.
-
-    Returns:
-        Iterator[Tuple[str, str]]: (name, description)
     """
 
-    lines: list = paper.splitlines()
+    lines: list[str] = paper.splitlines()
     lines = sorted(set(lines), key=lines.index)
     count = 0
     for i in chain(get_normal_rules(lines), get_patch_rules(lines)):
@@ -177,29 +182,30 @@ def get_rules(paper: str) -> Iterator[Tuple[str, str]]:
         raise NotImplementedError(lines)
 
 
-def get_normal_rules(lines: Iterator[str]) -> Iterator[Tuple[str, str]]:
-    """Get normal holiday rule for a year
+def get_normal_rules(lines: Iterable[str]) -> Iterator[tuple[str, str]]:
+    """Get normal holiday rule for a year.
 
     Args:
-        lines (Iterator[str]): paper content
+        lines (Iterable[str]): Paper content.
 
     Returns:
-        Iterator[Tuple[str, str]]: (name, description)
+        Iterator[tuple[str, str]]: (name, description)
     """
     for i in lines:
         match = re.match(r"[一二三四五六七八九十]、(.+?)：(.+)", i)
         if match:
-            yield match.groups()
+            name, description = match.groups()
+            yield name, description
 
 
-def get_patch_rules(lines: Iterator[str]) -> Iterator[Tuple[str, str]]:
-    """Get holiday patch rule for existed holiday
+def get_patch_rules(lines: Iterable[str]) -> Iterator[tuple[str, str]]:
+    """Get holiday patch rules for existed holiday.
 
     Args:
-        lines (Iterator[str]): paper content
+        lines (Iterable[str]): Paper content.
 
     Returns:
-        Iterator[Tuple[str, str]]: (name, description)
+        Iterator[tuple[str, str]]: (name, description), patched rules
     """
     name = None
     for i in lines:
@@ -216,12 +222,12 @@ def get_patch_rules(lines: Iterator[str]) -> Iterator[Tuple[str, str]]:
             yield name, description
 
 
-def _cast_int(value):
+def _cast_int(value) -> int | None:
     return int(value) if value else None
 
 
 class DescriptionParser:
-    """Parser for holiday shift description."""
+    """Parser for holiday shift descriptions."""
 
     def __init__(self, description: str, year: int):
         self.description = description
@@ -229,30 +235,19 @@ class DescriptionParser:
         self.date_history = list()
 
     def parse(self) -> Iterator[dict]:
-        """Generator for description parsing result.
-
-        Args:
-            year (int): Context year
-        """
-
+        """Generator for description parsing result."""
         del self.date_history[:]
         for i in re.split("[，。；]", self.description):
-            for j in SentenceParser(self, i).parse():
-                yield j
+            yield from SentenceParser(self, i).parse()
 
         if not self.date_history:
             raise NotImplementedError(self.description)
 
-    def get_date(self, year: Optional[int], month: Optional[int], day: int) -> date:
-        """Get date in context.
-
-        Args:
-            year (Optional[int]): year
-            month (int): month
-            day (int): day
+    def get_date(self, year: int | None, month: int | None, day: int | None) -> date:
+        """Get date int context.
 
         Returns:
-            date: Date result
+            date: result date.
         """
 
         assert day, "No day specified"
@@ -261,7 +256,7 @@ class DescriptionParser:
         if month is None:
             month = self.date_history[-1].month
 
-        # Special case: 12 month may mean previous year
+        # Special case: 12 months may mean previous year
         if (
             year is None
             and month == 12
@@ -271,6 +266,8 @@ class DescriptionParser:
             year = self.year - 1
 
         year = year or self.year
+
+        assert month is not None, "No month specified"
         return date(year=year, month=month, day=day)
 
 
@@ -282,17 +279,19 @@ class SentenceParser:
         self.sentence = sentence
 
     def extract_dates(self, text: str) -> Iterator[date]:
-        """Extract date from text.
+        """Extract dates from text.
 
         Args:
-            text (str): Text to extract
+            text (str): Text content to extract.
 
         Returns:
             Iterator[date]: Extracted dates.
         """
 
         count = 0
+        # Replace English parenthesis by Chinese ones.
         text = text.replace("(", "（").replace(")", "）")
+
         for i in chain(
             *(method(self, text) for method in self.date_extraction_methods)
         ):
@@ -314,16 +313,16 @@ class SentenceParser:
             yield self.parent.get_date(year=groups[0], month=groups[1], day=groups[2])
 
     def _extract_dates_2(self, value: str) -> Iterator[date]:
-        value = re.sub(r"（.+?）", "", value)
+        value = re.sub(r"（[^>]+）", "", value)
         match = re.findall(
-            r"(?:(\d+)年)?(?:(\d+)月)?(\d+)日(?:至|-|—)(?:(\d+)年)?(?:(\d+)月)?(\d+)日",
+            r"(?:(\d+)年)?(?:(\d+)月)?(\d+)日(?:[至\-—])?(?:(\d+)年)?(?:(\d+)月)?(\d+)日",
             value,
         )
         for groups in match:
             groups = [_cast_int(i) for i in groups]
             assert len(groups) == 6, groups
-            start = self.parent.get_date(year=groups[0], month=groups[1], day=groups[2])
-            end = self.parent.get_date(year=groups[3], month=groups[4], day=groups[5])
+            start = self.parent.get_date(groups[0], groups[1], groups[2])
+            end = self.parent.get_date(groups[3], groups[4], groups[5])
             for i in range((end - start).days + 1):
                 yield start + timedelta(days=i)
 
@@ -345,17 +344,13 @@ class SentenceParser:
     date_extraction_methods = [_extract_dates_1, _extract_dates_2, _extract_dates_3]
 
     def parse(self) -> Iterator[dict]:
-        """Parse days with memory
-
-        Args:
-            memory (set): Date memory
+        """Parse days with memory.
 
         Returns:
             Iterator[dict]: Days without name field.
         """
         for method in self.parsing_methods:
-            for i in method(self):
-                yield i
+            yield from method(self)
 
     def _parse_rest_1(self):
         if self.sentence.startswith("不"):
@@ -387,11 +382,11 @@ class SentenceParser:
 
 
 def parse_paper(year: int, url: str) -> Iterator[dict]:
-    """Parse one paper
+    """Parse one year.
 
     Args:
-        year (int): Year
-        url (str): Paper url
+        year (int): The year
+        url (str): Paper url.
 
     Returns:
         Iterator[dict]: Days
@@ -399,6 +394,7 @@ def parse_paper(year: int, url: str) -> Iterator[dict]:
     if url in PRE_PARSED_PAPERS:
         yield from PRE_PARSED_PAPERS[url]
         return
+
     paper = get_paper(url)
     rules = get_rules(paper)
     ret = (
@@ -407,27 +403,34 @@ def parse_paper(year: int, url: str) -> Iterator[dict]:
         for i in DescriptionParser(description, year).parse()
     )
     try:
-        for i in ret:
-            yield i
+        yield from ret
     except NotImplementedError as ex:
         raise RuntimeError("Can not parse paper", url) from ex
 
 
-def fetch_holiday(year: int):
+def fetch_holidays(year: int) -> dict:
     """Fetch holiday data."""
-
     papers = get_paper_urls(year)
-
-    days = dict()
-
-    for k in (j for i in papers for j in parse_paper(year, i)):
-        days[k["date"]] = k
+    days = {
+        k["date"]: k
+        for k in (rule for url in papers for rule in parse_paper(year, url))
+    }
 
     return {
         "year": year,
         "papers": papers,
         "days": sorted(days.values(), key=lambda x: x["date"]),
     }
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    """Custom json encoder."""
+
+    def default(self, o):
+        if isinstance(o, date):
+            return o.isoformat()
+
+        return super().default(o)
 
 
 def main():
@@ -438,20 +441,9 @@ def main():
 
     print(
         json.dumps(
-            fetch_holiday(year), indent=4, ensure_ascii=False, cls=CustomJSONEncoder
+            fetch_holidays(year), indent=4, ensure_ascii=False, cls=CustomJSONEncoder
         )
     )
-
-
-class CustomJSONEncoder(json.JSONEncoder):
-    """Custom json encoder."""
-
-    def default(self, o):
-        # pylint:disable=method-hidden
-        if isinstance(o, date):
-            return o.isoformat()
-
-        return super().default(o)
 
 
 if __name__ == "__main__":
