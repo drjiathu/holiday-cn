@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "holiday-cn"
-version = "0.1.0"
+version = "1.0.0"
 description = "A Python package for Chinese Public Holidays"
 authors = ["drjiathu <xiaowei.jia@outlook.com>"]
 license = "MIT"
