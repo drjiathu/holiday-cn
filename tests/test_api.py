@@ -46,8 +46,14 @@ def mock_data_dir(tmp_path):
 class TestRootEndpoint:
     """Tests for root endpoint."""
 
-    def test_root_returns_api_info(self, client):
+    def test_root_returns_html(self, client):
         response = client.get("/")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        assert "中国法定节假日 API" in response.text
+
+    def test_api_info_returns_json(self, client):
+        response = client.get("/api")
         assert response.status_code == 200
         data = response.json()
         assert "name" in data

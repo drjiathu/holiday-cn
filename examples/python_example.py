@@ -4,12 +4,13 @@
 通过 jsDelivr CDN 访问中国法定节假日数据的 Python 示例
 
 CDN 地址格式:
-https://cdn.jsdelivr.net/gh/drjiathu/holiday-cn@main/data/{year}.json
+https://cdn.jsdelivr.net/gh/drjiathu/holiday-cn@latest/data/{year}.json
 """
 
-import requests
 from functools import lru_cache
-from datetime import date, timedelta
+from datetime import date
+
+import requests
 
 # CDN 基础地址 (使用 @latest 自动指向最新 release)
 CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/drjiathu/holiday-cn@latest/data"

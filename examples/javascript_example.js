@@ -2,7 +2,7 @@
  * 通过 jsDelivr CDN 访问中国法定节假日数据的 JavaScript 示例
  *
  * CDN 地址格式:
- * https://cdn.jsdelivr.net/gh/drjiathu/holiday-cn@main/data/{year}.json
+ * https://cdn.jsdelivr.net/gh/drjiathu/holiday-cn@latest/data/{year}.json
  *
  * 适用于: Node.js (18+) 和现代浏览器
  */

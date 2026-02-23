@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国法定节假日 API</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>中国法定节假日 API</h1>
+        <p class="subtitle">v{{ version }} · 数据来源：国务院办公厅</p>
+
+        <div class="card">
+            <h2>在线查询</h2>
+            <div class="input-group">
+                <input type="date" id="queryDate">
+                <button onclick="queryDate()">查询日期</button>
+            </div>
+            <div id="dateResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>API 端点</h2>
+            <table class="api-table">
+                <tr>
+                    <th>端点</th>
+                    <th>说明</th>
+                    <th>示例</th>
+                </tr>
+                <tr>
+                    <td><code>GET /date/{date}</code></td>
+                    <td>查询指定日期</td>
+                    <td><a href="/date/2024-10-01">/date/2024-10-01</a></td>
+                </tr>
+                <tr>
+                    <td><code>GET /today</code></td>
+                    <td>查询今天</td>
+                    <td><a href="/today">/today</a></td>
+                </tr>
+                <tr>
+                    <td><code>GET /year/{year}</code></td>
+                    <td>获取年度数据</td>
+                    <td><a href="/year/2024">/year/2024</a></td>
+                </tr>
+                <tr>
+                    <td><code>GET /range</code></td>
+                    <td>查询日期范围</td>
+                    <td><a href="/range?start=2024-10-01&end=2024-10-07">/range?start=...&end=...</a></td>
+                </tr>
+            </table>
+            <div class="links">
+                <a href="/docs">Swagger 文档</a>
+                <a href="/redoc">ReDoc 文档</a>
+                <a href="https://github.com/drjiathu/holiday-cn" target="_blank">GitHub</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="https://github.com/drjiathu/holiday-cn" target="_blank">holiday-cn</a>
+            · 自动抓取国务院公告 · 每日更新
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('queryDate').value = new Date().toISOString().split('T')[0];
+
+        async function queryDate() {
+            const dateInput = document.getElementById('queryDate').value;
+            const resultDiv = document.getElementById('dateResult');
+            if (!dateInput) {
+                resultDiv.innerHTML = '<div class="result normal">请选择日期</div>';
+                return;
+            }
+            try {
+                const resp = await fetch(`/date/${dateInput}`);
+                const data = await resp.json();
+                if (data.isHoliday) {
+                    const isOff = data.isOffDay;
+                    resultDiv.innerHTML = `
+                        <div class="result ${isOff ? 'holiday' : 'workday'}">
+                            <div class="date">${data.date}</div>
+                            <div class="name">${data.name}</div>
+                            <div class="status">${isOff ? '🎉 放假休息' : '💼 调休上班'}</div>
+                        </div>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result normal">
+                            <div class="date">${data.date}</div>
+                            <div class="name">普通日</div>
+                            <div class="status">非法定节假日</div>
+                        </div>`;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="result normal">查询失败</div>`;
+            }
+        }
+        queryDate();
+    </script>
+</body>
+</html>

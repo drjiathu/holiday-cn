@@ -3,15 +3,27 @@
 """Simple API service for querying Chinese holidays."""
 
 import json
+import tomllib
 from datetime import date
+from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from .filetools import dataspace_path
+
+# 模板和静态文件路径
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+# 从 pyproject.toml 读取版本号
+with open(BASE_DIR.parent / "pyproject.toml", "rb") as f:
+    VERSION = tomllib.load(f)["tool"]["poetry"]["version"]
 
 
 class UTF8JSONResponse(JSONResponse):
@@ -30,7 +42,7 @@ class UTF8JSONResponse(JSONResponse):
 app = FastAPI(
     title="中国法定节假日 API",
     description="查询中国法定节假日数据",
-    version="1.0.0",
+    version=VERSION,
     default_response_class=UTF8JSONResponse,
 )
 
@@ -42,6 +54,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 挂载静态文件
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
 class DayInfo(BaseModel):
@@ -66,6 +81,14 @@ class YearData(BaseModel):
 
     year: int
     papers: list[str]
+    days: list[DayInfo]
+
+
+class RangeResponse(BaseModel):
+    """日期范围查询响应"""
+
+    start: str
+    end: str
     days: list[DayInfo]
 
 
@@ -101,16 +124,23 @@ def find_day(year: int, month: int, day: int) -> dict | None:
     return None
 
 
-@app.get("/", summary="API 信息")
-def root():
-    """返回 API 基本信息"""
+@app.get("/", response_class=HTMLResponse, summary="API 首页")
+def root(request: Request):
+    """返回 API 首页"""
+    return templates.TemplateResponse(request, "index.html", {"version": VERSION})
+
+
+@app.get("/api", summary="API 信息")
+def api_info():
+    """返回 API 基本信息 (JSON)"""
     return {
         "name": "中国法定节假日 API",
-        "version": "1.0.0",
+        "version": VERSION,
         "endpoints": {
             "/date/{date}": "查询指定日期",
             "/year/{year}": "获取年度数据",
             "/today": "查询今天",
+            "/range": "查询日期范围",
         },
     }
 
@@ -124,8 +154,10 @@ def query_date(query_date: str):
     """
     try:
         d = date.fromisoformat(query_date)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="日期格式错误，应为 YYYY-MM-DD")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail="日期格式错误，应为 YYYY-MM-DD"
+        ) from exc
 
     day_info = find_day(d.year, d.month, d.day)
 
@@ -168,7 +200,7 @@ def get_year_data(year: int):
     )
 
 
-@app.get("/range", summary="查询日期范围")
+@app.get("/range", response_model=RangeResponse, summary="查询日期范围")
 def query_range(
     start: str = Query(..., description="开始日期 YYYY-MM-DD"),
     end: str = Query(..., description="结束日期 YYYY-MM-DD"),
@@ -177,8 +209,10 @@ def query_range(
     try:
         start_date = date.fromisoformat(start)
         end_date = date.fromisoformat(end)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="日期格式错误，应为 YYYY-MM-DD")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail="日期格式错误，应为 YYYY-MM-DD"
+        ) from exc
 
     if start_date > end_date:
         raise HTTPException(status_code=400, detail="开始日期不能晚于结束日期")
@@ -199,4 +233,9 @@ def query_range(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_config=str(BASE_DIR / "logging_config.json"),
+    )
