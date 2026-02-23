@@ -66,12 +66,28 @@ interface Holidays {
 
 ### 响应示例
 
+**查询指定日期** `GET /date/2024-10-01`
+
 ```json
 {
   "date": "2024-10-01",
   "isHoliday": true,
   "isOffDay": true,
   "name": "国庆节"
+}
+```
+
+**查询日期范围** `GET /range?start=2024-10-01&end=2024-10-07`
+
+```json
+{
+  "start": "2024-10-01",
+  "end": "2024-10-07",
+  "days": [
+    {"date": "2024-10-01", "name": "国庆节", "isOffDay": true},
+    {"date": "2024-10-02", "name": "国庆节", "isOffDay": true},
+    {"date": "2024-10-03", "name": "国庆节", "isOffDay": true}
+  ]
 }
 ```
 

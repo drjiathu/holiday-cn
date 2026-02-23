@@ -69,6 +69,14 @@ class YearData(BaseModel):
     days: list[DayInfo]
 
 
+class RangeResponse(BaseModel):
+    """日期范围查询响应"""
+
+    start: str
+    end: str
+    days: list[DayInfo]
+
+
 # 缓存已加载的数据
 _cache: dict[int, dict] = {}
 
@@ -111,6 +119,7 @@ def root():
             "/date/{date}": "查询指定日期",
             "/year/{year}": "获取年度数据",
             "/today": "查询今天",
+            "/range": "查询日期范围",
         },
     }
 
@@ -170,7 +179,7 @@ def get_year_data(year: int):
     )
 
 
-@app.get("/range", summary="查询日期范围")
+@app.get("/range", response_model=RangeResponse, summary="查询日期范围")
 def query_range(
     start: str = Query(..., description="开始日期 YYYY-MM-DD"),
     end: str = Query(..., description="结束日期 YYYY-MM-DD"),
